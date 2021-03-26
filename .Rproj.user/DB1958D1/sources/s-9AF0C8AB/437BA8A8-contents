@@ -1,0 +1,238 @@
+library(mlbench)
+library(randomForest)
+library(caret)
+library(VGAM)
+library(stats4)
+library(splines)
+library(sjmisc)
+library(pROC)
+library(boot)
+library(e1071)
+
+
+#________________________________MY LETTERS & SEED______________________________
+seed <- 447
+
+#___________________________________FUNCTIONS_________________________________
+
+#' @description
+#' Load the credit card data, and returns 3 folds of data
+#'
+#' @return list of 3 folds of data:
+loadAndSplitSets3Fold <- function(){
+  # Load Data
+  data <- read.csv("default_of_credit_card_clients.csv",header=T,skip=1)
+  data <- data[seq(38,30000,6),]
+
+  # set seed
+  set.seed(seed)
+  # drop ID
+  data <- data[,-1]
+  # create folds using
+  folds <- createFolds(data$limitbal, k = 3, list = FALSE, returnTrain = FALSE)
+
+  fold1 <- data[folds==1,]
+  fold2 <- data[folds==2,]
+  fold3 <- data[folds==3,]
+
+  return(list(fold1,fold2,fold3))
+}
+
+# Took from course lecture, and made some small cosmetic changes.
+transform <- function(dataset){
+
+  # Create better names of variables for delay status
+  newlabels <- c("delay1","delay2","delay3","delay4","delay5","delay6")
+  labels <- names(dataset)
+  labels[6:11] <- newlabels
+
+  subdata <- subset(dataset, education<=3 & marriage<=2)
+  nsub <- nrow(subdata)
+
+  wt <- .8
+  wtvec <- wt^(1:6)
+  wtvec <- wtvec/sum(wtvec) # WT of previous month to previous 6 normalized
+
+  # Create weighted averages, geometric decreasing from most recent
+  delayCol <- 6:11; billamtCol=12:17; payamtCol=18:23
+  delayAvg <- as.matrix(subdata[,delayCol])%*%wtvec
+  billamtAvg <- as.matrix(subdata[,billamtCol])%*%wtvec
+  payamtAvg <- as.matrix(subdata[,payamtCol])%*%wtvec
+
+  # Set Breaks
+  limitbalBreaks <- c(0,60000,150000,230000,2000000)
+  delayAvgBreaks <- c(-3,-0.9,0.1,1,8)
+  billamtAvgBreaks <- c(-400000,0,4000,18000,53000,2000000)
+  payamtAvgBreaks <- c(-0.1,10,900,1700,3100,6800,2000000)
+
+  limitbalCateg <- cut(subdata$limitbal,limitbalBreaks)
+  delayAvgCateg <- cut(delayAvg,delayAvgBreaks)
+  billamtAvgCateg <- cut(billamtAvg,billamtAvgBreaks)
+  payamtAvgCateg <- cut(payamtAvg,payamtAvgBreaks)
+
+  # Return dataframe with the transformed and binned variables
+  # sex=1 for M, sex=2 for F
+  return(data.frame(limitbalCateg,
+                    delayAvgCateg,
+                    billamtAvgCateg,
+                    payamtAvgCateg,
+                    idefault=subdata$idefault,
+                    sex=subdata$sex))
+}
+
+crossValidateGLM <- function(kFolds, transformed) {
+  auc <- 0
+  misPred05y <- 0
+  misPred03y <- 0
+  misPred02y <- 0
+
+  for (i in 1:3){
+    foldIndices <- c(1:3)
+    trainIndices <- foldIndices[-i]
+
+    train <- rbind(kFolds[[trainIndices[1]]], kFolds[[trainIndices[1]]])
+    holdo <- kFolds[[i]]
+
+    # Transform the Data if transform
+    if (transformed) {
+      train <- transform(train)
+      holdo <- transform(holdo)
+    }
+
+    logitReg <- NULL
+
+    # Train model depending on transformed or not
+    if (transformed) {
+      logitReg <- glm(idefault~ delayAvgCateg + payamtAvgCateg + sex
+                      + delayAvgCateg:sex + payamtAvgCateg:sex,
+                      family=binomial(link="logit"),data=train)
+    } else {
+      logitReg <- glm(idefault~., family=binomial(link="logit"), data=train)
+    }
+
+    # Make Predictions
+    outpred <- predict(logitReg,type="response", newdata=holdo)
+    outpred05y <- as.numeric(outpred>=0.5)
+    outpred03y <- as.numeric(outpred>=0.3)
+    outpred02y <- as.numeric(outpred>=0.2)
+
+    # get the mis prediction rates
+    thisMisPred05y <- calculateMisPred(holdo$idefault, outpred05y)
+    thisMisPred03y <- calculateMisPred(holdo$idefault, outpred03y)
+    thisMisPred02y <- calculateMisPred(holdo$idefault, outpred02y)
+
+    # Area under curve
+    ROCobjectHoldo <- roc(holdo$idefault,outpred)
+    thisAuc <- auc(ROCobjectHoldo)
+
+    # Plot the ROC
+    filename <- NULL
+    title <- NULL
+    if (transformed) {
+      filename <- sprintf("transformed_fold_%d.jpeg", i)
+      title <- sprintf("Transformed GLM fold %d", i)
+    } else {
+      filename <- sprintf("regular_fold_%d.jpeg", i)
+      title <- sprintf("Regular GLM fold %d", i)
+    }
+    jpeg(filename)
+    plot(ROCobjectHoldo, main = title)
+    dev.off()
+
+
+    # add errors to sum
+    auc <- auc + thisAuc
+    misPred05y <- misPred05y + thisMisPred05y
+    misPred03y <- misPred03y + thisMisPred03y
+    misPred02y <- misPred02y + thisMisPred02y
+  }
+
+  # get the average errors
+  auc <- auc / 3
+  misPred05y <- misPred05y / 3
+  misPred03y <- misPred03y / 3
+  misPred02y <- misPred02y / 3
+
+  return(list(auc, misPred05y, misPred03y, misPred02y))
+}
+
+crossValidateRF <- function(kFolds) {
+  auc <- 0
+  misPred05y <- 0
+  misPred03y <- 0
+  misPred02y <- 0
+
+  for (i in 1:3){
+    foldIndices <- c(1:3)
+    trainIndices <- foldIndices[-i]
+
+    train <- rbind(kFolds[[trainIndices[1]]], kFolds[[trainIndices[1]]])
+    holdo <- kFolds[[i]]
+
+    # Turn idefault to factors for RF
+    train$idefault <- factor(train$idefault)
+    holdo$idefault <- factor(holdo$idefault)
+
+    # Train model
+    set.seed(seed)
+    rfModel <- randomForest(idefault~., data=train, ntree=300, mtry=2, importance=TRUE)
+
+    # predictions
+    outpred <- predict(rfModel,type="prob",newdata=holdo)
+    outpred <- outpred[,2] # choose the probability for default
+    outpred05y <- as.numeric(outpred>=0.5)
+    outpred03y <- as.numeric(outpred>=0.3)
+    outpred02y <- as.numeric(outpred>=0.2)
+
+    # get the mis prediction rates
+    thisMisPred05y <- calculateMisPred(holdo$idefault, outpred05y)
+    thisMisPred03y <- calculateMisPred(holdo$idefault, outpred03y)
+    thisMisPred02y <- calculateMisPred(holdo$idefault, outpred02y)
+
+    # Area under curve
+    ROCobjectHoldo <- roc(holdo$idefault,outpred)
+    thisAuc <- auc(ROCobjectHoldo)
+
+    # Plot ROC
+    filename <- sprintf("rf_fold_%d.jpeg", i)
+    title <- sprintf("Random Forest fold %d", i)
+    jpeg(filename)
+    plot(ROCobjectHoldo, main = title)
+    dev.off()
+
+    # add errors to sum
+    auc <- auc + thisAuc
+    misPred05y <- misPred05y + thisMisPred05y
+    misPred03y <- misPred03y + thisMisPred03y
+    misPred02y <- misPred02y + thisMisPred02y
+  }
+
+  # get the average errors
+  auc <- auc / 3
+  misPred05y <- misPred05y / 3
+  misPred03y <- misPred03y / 3
+  misPred02y <- misPred02y / 3
+
+  return(list(auc, misPred05y, misPred03y, misPred02y))
+}
+
+# Calculate the misprediction rate
+# y is correct, pred is prediction
+calculateMisPred <- function(y, pred){
+  n <- length(y)
+  correctPred <- y == pred
+  correctCount <- length(correctPred[correctPred])
+  return ((n - correctCount)/n)
+}
+
+#___________________________________SCRIPTS____________________________________
+
+kFolds <- loadAndSplitSets3Fold()
+# For errors
+# [[1]] = AUC
+# [[2]] = misPred05y
+# [[3]] = misPred03y
+# [[4]] = misPred02y
+logitTransformedErrors <- crossValidateGLM(kFolds, transformed = TRUE)
+logitRegularErrors <- crossValidateGLM(kFolds, transformed = FALSE)
+rfErrors <- crossValidateRF(kFolds)

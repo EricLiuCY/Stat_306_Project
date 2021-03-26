@@ -1,0 +1,55 @@
+# 1
+library(car)
+library(matlib)
+
+gait <- read.table("gaitCYF.txt", header=T, sep="")
+names(gait)
+
+# play
+reg <- lm(GaitSpeed ~ ResVO2, data = gait)
+summary(reg)
+n <- nrow(gait)
+rss <- sqrt(sum((reg$residuals - mean(reg$residuals))^2) / (n-2))
+s_y <- sd(gait$GaitSpeed)
+s_x <- sd(gait$ResVO2)
+
+# my
+SS_res <- (rss * sqrt(n-2))^2
+SS_total <- (s_y * sqrt(n-1))^2
+1 - SS_res/SS_total
+
+# yuhan
+(0.057182  * s_x / s_y)^2
+
+
+# c
+reg <- lm(GaitSpeed ~ ResVO2 + Age, data = gait)
+
+summary(reg)
+
+reg$coefficients
+round(-0.03458, 2)
+
+# d
+# max(abs(reg$residuals))
+# round(max(abs(reg$residuals)), 2)
+rStandard <- rstandard(reg)
+round(max(abs(rStandard)),2)
+
+# e
+# Create matrix
+X <- cbind(1, gait$ResVO2, gait$Age)
+H <- X %*% solve(t(X) %*% X) %*% t(X)
+max(diag(H))
+round(max(diag(H)),2)
+
+# f
+# get index of max
+diag_H <- diag(H)
+which(diag_H == max(diag(H))) # 15
+gait[15,]
+
+# g
+reg <- lm(GaitSpeed ~ ResVO2 + Age, data = gait)
+newData <- data.frame(ResVO2 = gait$ResVO2[15], Age = gait$Age[15])
+round(predict.lm(reg, newdata = newData),2)
