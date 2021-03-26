@@ -2,7 +2,7 @@
 library(car)
 library(matlib)
 
-gait <- read.table("gaitCYF.txt", header=T, sep="")
+gait <- read.table("./gaitCYF.txt", header=T, sep="")
 names(gait)
 
 # play
