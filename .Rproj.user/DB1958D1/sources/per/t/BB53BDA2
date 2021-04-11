@@ -3,7 +3,7 @@
     "path": "~/Classes/stat306/project/src/basicCleaning.R",
     "project_path": "src/basicCleaning.R",
     "type": "r_source",
-    "hash": "0",
+    "hash": "1635619490",
     "contents": "",
     "dirty": false,
     "created": 1616732312967.0,
@@ -12,15 +12,15 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "5,19",
-        "scrollLine": "0"
+        "cursorPosition": "62,0",
+        "scrollLine": "56"
     },
     "folds": "",
-    "lastKnownWriteTime": 1616732322,
+    "lastKnownWriteTime": 1618130074,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1616732322784,
+    "last_content_update": 1618130074523,
     "read_only": false,
     "read_only_alternatives": []
 }
