@@ -77,31 +77,10 @@ kFoldCV <- function(data, k, transformed) {
 # partition data
 
 # _______________________________ TRAIN SCRIPT ________________________
-set.seed(306)
+set.seed(888)
 vTrain <- read_parquet("data/processed/train.parquet")
 vTrainMSE <- kFoldCV(vTrain, nrow(vTrain), FALSE)
 
-set.seed(306)
+set.seed(888)
 tTrain <- read_parquet("data/processed/transformed_train.parquet")
 tTrainMSE <- kFoldCV(tTrain, nrow(tTrain), TRUE)
-
-model <- lm(formula = SalePrice ~ MSSubClass + MSZoning + LotArea + Street +
-              LotShape + LandContour + Utilities + LotConfig + LandSlope +
-              Neighborhood + Condition1 + Condition2 + OverallQual + 
-              OverallCond + YearBuilt + YearRemodAdd + RoofMatl + 
-              Exterior1st + MasVnrType + MasVnrArea + ExterCond + BsmtQual + 
-              BsmtExposure + BsmtUnfSF + TotalBsmtSF + X2ndFlrSF + GrLivArea + 
-              FullBath + BedroomAbvGr + KitchenAbvGr + KitchenQual + 
-              Functional + Fireplaces + GarageFinish + GarageCars + 
-              GarageArea + GarageQual + GarageCond + PavedDrive + WoodDeckSF + 
-              OpenPorchSF + EnclosedPorch + X3SsnPorch + ScreenPorch + 
-              PoolArea + SaleCondition + UnfinishedRatio + BedPerBath + 
-              BathsPerLivAbv + hasOpenPorchSF + hasScreenPorch + 
-              I(TotalBsmtSF^2) + I(MasVnrArea^2) + I(GarageArea^2) + 
-              I(GrLivArea^2) + BsmtQual:UnfinishedRatio + 
-              MasVnrType:I(MasVnrArea^2) + BsmtQual:I(TotalBsmtSF^2) + 
-              BsmtExposure:I(TotalBsmtSF^2) + GarageFinish:I(GarageArea^2) + 
-              MSZoning:LotArea + RoofMatl:X2ndFlrSF + MSSubClass:MSZoning +
-              LotArea:LotShape + LotArea:LotConfig + LotArea:LandSlope +
-              Neighborhood:I(GrLivArea^2) + LotArea:Condition1 + 
-              LotArea:Condition2, data = head(tTrain,122))

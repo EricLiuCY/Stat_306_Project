@@ -1,27 +1,27 @@
 {
-    "id": "D3CC2D3C",
-    "path": "~/Classes/stat306/project/src/feature_engineering.R",
-    "project_path": "src/feature_engineering.R",
+    "id": "F9482EE1",
+    "path": "~/Classes/stat306/project/src/training.R",
+    "project_path": "src/training.R",
     "type": "r_source",
-    "hash": "3593897164",
+    "hash": "1011354771",
     "contents": "",
     "dirty": false,
-    "created": 1618294744012.0,
+    "created": 1618132675610.0,
     "source_on_save": false,
-    "relative_order": 4,
+    "relative_order": 1,
     "properties": {
         "tempName": "Untitled1",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "21,30",
-        "scrollLine": "4"
+        "cursorPosition": "70,43",
+        "scrollLine": "63"
     },
     "folds": "",
-    "lastKnownWriteTime": 1618306611,
+    "lastKnownWriteTime": 1618313291,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1618306611568,
+    "last_content_update": 1618313291319,
     "read_only": false,
     "read_only_alternatives": []
 }
