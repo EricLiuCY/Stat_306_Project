@@ -10,14 +10,19 @@ library(arrow)
 initDataset <- function(){
   # Load datasets
   train <- read.csv("./data/raw/train.csv")
-  holdo <- read.csv("./data/raw/test.csv")
   nTrain <- nrow(train)
-  
+
   # remove ID from train
   train <- train[,-1]
   
+  # Set character entries as factor
   train <- train %>% mutate_if(is.character, as.factor)
-  holdo <- holdo %>% mutate_if(is.character, as.factor)
+  
+  # Manually set some integer based entries as factors
+  # MSSubClass is a code
+  train$MSSubClass <- as.factor(train$MSSubClass)
+  # Month sold is not cyclic, so set as factor
+  train$MoSold <- as.factor(train$MoSold)
   
   # get NA Columns
   threshold <- ceiling(nTrain/10)
@@ -25,12 +30,9 @@ initDataset <- function(){
   
   # select only columns with NA < threshold, and rows without NA
   train <- na.omit(select(train, -NACols))
-  holdo <- na.omit(select(holdo, -NACols))
   
   # save as parquet
-  # Save as parquets
   write_parquet(train, sink = "data/processed/train.parquet")
-  write_parquet(holdo, sink = "data/processed/holdo.parquet")
 }
 
 #' @description
@@ -70,6 +72,6 @@ printFeatures <- function(data) {
   }
 }
 
-#____________________ SCRIPTS FOR TESTING & Saving ________________
+# ____________________ SCRIPTS  ______________________
 
 initDataset()
