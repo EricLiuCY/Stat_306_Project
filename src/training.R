@@ -74,9 +74,6 @@ kFoldCV <- function(data, k, transformed) {
   return(avgMSE / k)
 }
 
-# partition data
-
-
 # _______________________________ TRAIN SCRIPT ________________________
 set.seed(888)
 vTrain <- read_parquet("data/processed/train.parquet")
