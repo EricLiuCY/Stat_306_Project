@@ -1,27 +1,27 @@
 {
-    "id": "F9482EE1",
-    "path": "~/Classes/stat306/project/src/training.R",
-    "project_path": "src/training.R",
+    "id": "F12CCC8A",
+    "path": "~/Classes/stat306/project/src/model_selection.R",
+    "project_path": "src/model_selection.R",
     "type": "r_source",
-    "hash": "1953505816",
+    "hash": "0",
     "contents": "",
     "dirty": false,
-    "created": 1618132675610.0,
+    "created": 1618311258308.0,
     "source_on_save": false,
-    "relative_order": 1,
+    "relative_order": 6,
     "properties": {
         "tempName": "Untitled1",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "106,58",
-        "scrollLine": "81"
+        "cursorPosition": "13,44",
+        "scrollLine": "0"
     },
     "folds": "",
-    "lastKnownWriteTime": 1618311588,
+    "lastKnownWriteTime": 1618311310,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1618311588492,
+    "last_content_update": 1618311310287,
     "read_only": false,
     "read_only_alternatives": []
 }
