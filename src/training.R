@@ -82,3 +82,11 @@ vTrainMSE <- kFoldCV(vTrain, nrow(vTrain), FALSE)
 set.seed(888)
 tTrain <- read_parquet("data/processed/transformed_train.parquet")
 tTrainMSE <- kFoldCV(tTrain, nrow(tTrain), TRUE)
+
+# Full model
+vModel <- lm(SalePrice ~ ., data = vTrain)
+summary(vModel)
+
+# Transformed Model
+tModel <- lm(SalePrice ~ ., data = tTrain)
+summary(tModel)
